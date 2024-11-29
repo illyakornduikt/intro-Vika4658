@@ -15,18 +15,22 @@ public class Player extends Entity {
 
     public final int screenX;
     public final int screenY;
+    int hasKey = 0;
+
 
     public Player(GamePanel gp, KeyHandler keyH) {
 
         this.gp = gp;
         this.keyH = keyH;
 
-        screenX = gp.screenWidth/2 - (gp.tileSize/2);
-        screenY = gp.screenHeight/2 - (gp.tileSize/2);
+        screenX = gp.screenWidth / 2 - (gp.tileSize / 2);
+        screenY = gp.screenHeight / 2 - (gp.tileSize / 2);
 
         solidArea = new Rectangle();
         solidArea.x = 8;
         solidArea.y = 16;
+        solidAreaDefaultX = solidArea.x;
+        solidAreaDefaultY = solidArea.y;
         solidArea.width = 32;
         solidArea.height = 32;
 
@@ -34,6 +38,7 @@ public class Player extends Entity {
         setDefaultValues();
         getPlayerImage();
     }
+
     public void setDefaultValues() {
         worldX = gp.tileSize * 23;
         worldY = gp.tileSize * 21;
@@ -51,24 +56,21 @@ public class Player extends Entity {
             left2 = ImageIO.read(getClass().getResourceAsStream("/player/boy_left_2.png"));
             right1 = ImageIO.read(getClass().getResourceAsStream("/player/boy_right_1.png"));
             right2 = ImageIO.read(getClass().getResourceAsStream("/player/boy_right_2.png"));
-        }catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
 
         }
     }
 
     public void update() {
-        if(keyH.upPressed == true || keyH.downPressed == true || keyH.leftPressed == true || keyH.rightPressed == true) {
-            if(keyH.upPressed == true) {
+        if (keyH.upPressed == true || keyH.downPressed == true || keyH.leftPressed == true || keyH.rightPressed == true) {
+            if (keyH.upPressed == true) {
                 direction = "up";
-            }
-            else if(keyH.downPressed == true) {
+            } else if (keyH.downPressed == true) {
                 direction = "down";
-            }
-            else if(keyH.leftPressed == true) {
+            } else if (keyH.leftPressed == true) {
                 direction = "left";
-            }
-            else if(keyH.rightPressed == true) {
+            } else if (keyH.rightPressed == true) {
                 direction = "right";
             }
 
@@ -76,8 +78,12 @@ public class Player extends Entity {
             collisionOn = false;
             gp.cChecker.checkTile(this);
 
-            if(collisionOn == false) {
-                switch(direction) {
+            int objIndex = gp.cChecker.checkObject(this, true);
+            pickUpObject(objIndex);
+
+
+            if (collisionOn == false) {
+                switch (direction) {
                     case "up":
                         worldY -= speed;
                         break;
@@ -93,6 +99,7 @@ public class Player extends Entity {
                 }
             }
 
+
             spriteCounter++;
             if(spriteCounter > 12) {
                 if(spriteNum == 1) {
@@ -105,12 +112,37 @@ public class Player extends Entity {
             }
         }
     }
+    public void pickUpObject(int i) {
+        if (i != 999) {
+            String objName = gp.obj[i].name;
+            switch(objName) {
+                case "Key":
+                    gp.playSE(1);
+                    hasKey++;
+                    gp.obj[i] = null;
+                    System.out.println("Key:"+hasKey);
+                    break;
+                case "Door":
+                    gp.playSE(3);
+                    if(hasKey > 0) {
+                        gp.obj[i] = null;
+                        hasKey--;
+                    }
+                    System.out.println("Key:"+hasKey);
+                    break;
+                case "Boots":
+                    gp.playSE(2);
+                    speed += 1;
+                    gp.obj[i] = null;
+                    break;
+            }
+        }
+    }
     public void draw(Graphics2D g2) {
 //        g2.setColor(Color.white);
 //        g2.fillRect(x, y, gp.tileSize, gp.tileSize);
 
         BufferedImage image = null;
-
 
         switch(direction) {
             case "up":
